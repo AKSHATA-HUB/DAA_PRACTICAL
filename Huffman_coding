@@ -1,0 +1,57 @@
+import heapq
+from collections import Counter, namedtuple
+
+class Node:
+    def __init__(self, char, freq, left=None, right=None):
+        self.char = char
+        self.freq = freq
+        self.left = left
+        self.right = right
+
+    def __lt__(self, other):  # Comparison function for priority queue
+        return self.freq < other.freq
+
+# Generate Huffman codes
+def generate_codes(node, prefix="", code_map={}):
+    if node.char:  # Leaf node
+        code_map[node.char] = prefix
+    else:
+        generate_codes(node.left, prefix + "0", code_map)
+        generate_codes(node.right, prefix + "1", code_map)
+    return code_map
+
+# Huffman Encoding function
+def huffman_encoding(data):
+    if not data: return "", {}
+    
+    # Count frequency of each character and create a priority queue
+    heap = [Node(char, freq) for char, freq in Counter(data).items()]
+    heapq.heapify(heap)
+
+    # Build the Huffman Tree
+    while len(heap) > 1:
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+        heapq.heappush(heap, Node(None, left.freq + right.freq, left, right))
+
+    # Generate codes from the Huffman Tree
+    codes = generate_codes(heap[0])
+    encoded_data = "".join(codes[char] for char in data)
+    return encoded_data, codes
+
+# Decode Huffman-encoded data
+def huffman_decoding(encoded_data, codes):
+    reverse_codes = {v: k for k, v in codes.items()}
+    decoded_data, temp = "", ""
+    for bit in encoded_data:
+        temp += bit
+        if temp in reverse_codes:
+            decoded_data += reverse_codes[temp]
+            temp = ""
+    return decoded_data
+
+# Example usage
+data = "huffman encoding"
+encoded, codes = huffman_encoding(data)
+decoded = huffman_decoding(encoded, codes)
+print("Encoded:", encoded, "\nCodes:", codes, "\nDecoded:", decoded)
